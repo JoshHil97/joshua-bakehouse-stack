@@ -17,6 +17,7 @@ function makeStack () {
     createTestVpc: true,
     hostedZoneId: 'Z123456789TEST',
     skipBundling: true,
+    skipAssetDeployments: true,
     skipClientEnvWrite: true
   })
 }
