@@ -1,0 +1,51 @@
+.wrap {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .title {
+    font-size: 44px;
+    margin: 0 0 10px;
+  }
+  
+  .sub {
+    margin: 0 0 20px;
+  }
+  
+  .info {
+    font-size: 16px;
+  }
+  
+  .error {
+    color: crimson;
+    font-weight: 600;
+  }
+  
+  .grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  
+  .card {
+    background: white;
+    border: 2px solid #d8dcea;
+    border-radius: 16px;
+    padding: 16px;
+  }
+  
+  .name {
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #07074e;
+  }
+  
+  .link {
+    display: inline-block;
+    border: 1px solid #588bb4;
+    padding: 8px 12px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #07074e;
+    background: #eaf2fb;
+  }

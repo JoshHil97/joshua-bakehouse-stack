@@ -1,0 +1,50 @@
+.page {
+    min-height: calc(100vh - 140px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  
+  .card {
+    width: 100%;
+    max-width: 520px;
+    display: grid;
+    gap: 18px;
+  }
+  
+  .title {
+    text-align: center;
+    font-size: 48px;
+    margin: 0;
+  }
+  
+  .form {
+    display: grid;
+    gap: 12px;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid #d8dcea;
+    font-size: 16px;
+  }
+  
+  .button {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 0;
+    background: #3a4fa2;
+    color: #ffffff;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .error {
+    color: crimson;
+    text-align: center;
+    margin: 0;
+  }

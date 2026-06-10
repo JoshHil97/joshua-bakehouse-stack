@@ -1,0 +1,13 @@
+node_modules
+.DS_Store
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+cdk.out.test
+
+client/.env.production
+client/.env.local
+client/dist
+client/test-results
+client/playwright-report
