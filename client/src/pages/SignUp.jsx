@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "./Signup.module.css";
+import styles from "./SignUp.module.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
