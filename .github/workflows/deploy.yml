@@ -1,0 +1,95 @@
+name: Deploy Bakehouse
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Bakehouse CI
+    branches:
+      - main
+    types:
+      - completed
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy CDK stack
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+
+    env:
+      BAKEHOUSE_STACK_NAME: ${{ vars.BAKEHOUSE_STACK_NAME || 'joshua-hilarion-bakehouse' }}
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-2' }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ACCESS_KEY_ID_SECRET: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            client/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install client dependencies
+        run: npm ci
+        working-directory: client
+
+      - name: Build client assets
+        run: npm run build
+        working-directory: client
+        env:
+          VITE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
+
+      - name: Validate AWS credentials configuration
+        shell: bash
+        run: |
+          if [ -n "$AWS_ROLE_ARN" ]; then
+            echo "Using AWS OIDC role."
+            exit 0
+          fi
+
+          if [ -n "$AWS_ACCESS_KEY_ID_SECRET" ] && [ -n "$AWS_SECRET_ACCESS_KEY_SECRET" ]; then
+            echo "Using AWS access key secrets."
+            exit 0
+          fi
+
+          echo "::error::Configure either AWS_ROLE_ARN, or AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, in repository secrets."
+          exit 1
+
+      - name: Configure AWS credentials with OIDC
+        if: env.AWS_ROLE_ARN != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure AWS credentials with access keys
+        if: env.AWS_ROLE_ARN == ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID_SECRET }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY_SECRET }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: CDK synth
+        run: npx cdk synth
+        env:
+          BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
+
+      - name: CDK deploy
+        run: npx cdk deploy --require-approval never
+        env:
+          BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}

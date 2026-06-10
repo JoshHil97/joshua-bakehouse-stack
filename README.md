@@ -76,6 +76,31 @@ Useful commands:
 * `npx cdk diff` compares deployed stack with current state
 * `npx cdk deploy` deploys this stack to your default AWS account and region
 
+## GitHub Deploy
+
+GitHub Actions cannot use your local `student` SSO profile. The repo includes `.github/workflows/deploy.yml`, which deploys after CI passes on `main` and can also be run manually from Actions > Deploy Bakehouse.
+
+Set these in GitHub before using the deploy workflow:
+
+* Repository variable `BAKEHOUSE_STACK_NAME`: `joshua-hilarion-bakehouse`
+* Repository variable `AWS_REGION`: `eu-west-2`
+* Repository secret `AWS_ROLE_ARN` for a GitHub OIDC deploy role
+
+If you cannot use OIDC, set these secrets instead:
+
+* `AWS_ACCESS_KEY_ID`
+* `AWS_SECRET_ACCESS_KEY`
+
+The deploy workflow runs:
+
+```sh
+npm ci
+cd client && npm ci && npm run build
+cd ..
+npx cdk synth
+npx cdk deploy --require-approval never
+```
+
 ## Monitoring
 
 The stack creates a CloudWatch dashboard and alarms:
