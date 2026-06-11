@@ -55,6 +55,14 @@ $env:BASE_URL='https://your-stack.cta-training.academy'; npm run test:load
 
 The k6 test expects `/api/healthcheck` and `/api/products` to be reachable.
 
+Run the small CloudWatch demo test against the deployed Bakehouse app:
+
+```powershell
+$env:BASE_URL='https://joshua-hilarion-bakehouse.cta-training.academy'; npm run test:load:cloudwatch
+```
+
+This runs for about one minute. It calls `/api/healthcheck`, `/api/products`, and deliberately calls `/api/bad` a few times so the API 5XX graph and alarm have something visible to show.
+
 ## Deploy
 
 Set the stack name, build the client, then synth or deploy:
@@ -153,3 +161,18 @@ Or use the k6 smoke test once k6 is installed:
 ```powershell
 $env:BASE_URL='https://joshua-hilarion-bakehouse.cta-training.academy'; npm run test:load
 ```
+
+To make the CloudWatch dashboard and 5XX alarm move more clearly, run:
+
+```powershell
+$env:BASE_URL='https://joshua-hilarion-bakehouse.cta-training.academy'; npm run test:load:cloudwatch
+```
+
+Then watch these AWS pages:
+
+* CloudWatch > Dashboards > `joshua-hilarion-bakehouse-bakehouse-dashboard`
+* CloudWatch > Alarms > `joshua-hilarion-bakehouse-api-5xx-errors`
+* CloudWatch > Metrics > API Gateway > By Api Name, Stage, Method, Resource
+* CloudWatch > Log groups > search `/aws/lambda/joshua-hilarion-bakehouse`
+
+CloudWatch metrics can take a few minutes to appear. Set the dashboard time range to `Last 15 minutes` and period to `1 minute` if the graph looks quiet.
