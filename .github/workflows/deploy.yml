@@ -15,9 +15,25 @@ permissions:
   id-token: write
 
 jobs:
+  setup:
+    name: Prepare deploy session
+    runs-on: ubuntu-latest
+    outputs:
+      session-name: ${{ steps.session.outputs.session-name }}
+
+    steps:
+      - name: Build AWS role session name
+        id: session
+        shell: bash
+        run: |
+          SESSION_NAME="gha-cdk-joshua-hilarion-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "session-name=${SESSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Using AWS role session name: ${SESSION_NAME}"
+
   deploy:
     name: Deploy CDK stack
     runs-on: ubuntu-latest
+    needs: setup
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
 
     env:
@@ -75,6 +91,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: ${{ needs.setup.outputs.session-name }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Configure AWS credentials with access keys
@@ -85,11 +102,23 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY_SECRET }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify AWS identity
+      - name: Verify AWS identity and session
         shell: bash
         run: |
-          aws sts get-caller-identity
-          ACTUAL_ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+          echo "Verifying AWS credentials..."
+          IDENTITY="$(aws sts get-caller-identity)"
+          echo "Assumed role:"
+          echo "${IDENTITY}" | jq '.'
+
+          ROLE_SESSION="$(echo "${IDENTITY}" | jq -r '.Arn' | grep -oE '[^/]+$')"
+          echo "Current session: ${ROLE_SESSION}"
+
+          if [ -n "$AWS_ROLE_ARN" ] && [ "$ROLE_SESSION" != "${{ needs.setup.outputs.session-name }}" ]; then
+            echo "::error::Expected role session ${{ needs.setup.outputs.session-name }} but got $ROLE_SESSION"
+            exit 1
+          fi
+
+          ACTUAL_ACCOUNT="$(echo "${IDENTITY}" | jq -r '.Account')"
           if [ "$ACTUAL_ACCOUNT" != "$AWS_ACCOUNT_ID" ]; then
             echo "::error::Expected AWS account $AWS_ACCOUNT_ID but got $ACTUAL_ACCOUNT"
             exit 1
