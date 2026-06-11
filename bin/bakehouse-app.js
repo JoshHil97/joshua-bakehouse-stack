@@ -9,10 +9,22 @@ if (!stackName || !stackName.trim()) {
   process.exit(1)
 }
 
+const account =
+  process.env.CDK_DEFAULT_ACCOUNT ||
+  process.env.AWS_ACCOUNT_ID ||
+  process.env.AWS_ACCOUNT ||
+  'NOT_SET'
+
+const region =
+  process.env.CDK_DEFAULT_REGION ||
+  process.env.AWS_REGION ||
+  process.env.AWS_DEFAULT_REGION ||
+  'NOT_SET'
+
 const settings = {
   env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT || 'NOT_SET',
-    region: process.env.CDK_DEFAULT_REGION || 'NOT_SET'
+    account,
+    region
   },
   stackName: stackName,
   certArn: cdk.Fn.importValue('CTASharedCertArn'), // SSL cert for HTTPS
@@ -36,4 +48,3 @@ new BakehouseStack(app,`${settings.stackName}-stack`,{
   dbName: settings.dbName,
   vpcName: settings.vpcName  
 });
-

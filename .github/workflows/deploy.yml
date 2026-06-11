@@ -22,6 +22,7 @@ jobs:
 
     env:
       BAKEHOUSE_STACK_NAME: ${{ vars.BAKEHOUSE_STACK_NAME || 'joshua-hilarion-bakehouse' }}
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID || '827602716979' }}
       AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-2' }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
       AWS_ACCESS_KEY_ID_SECRET: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -84,12 +85,26 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY_SECRET }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Verify AWS identity
+        shell: bash
+        run: |
+          aws sts get-caller-identity
+          ACTUAL_ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
+          if [ "$ACTUAL_ACCOUNT" != "$AWS_ACCOUNT_ID" ]; then
+            echo "::error::Expected AWS account $AWS_ACCOUNT_ID but got $ACTUAL_ACCOUNT"
+            exit 1
+          fi
+
       - name: CDK synth
         run: npx cdk synth
         env:
           BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: CDK deploy
         run: npx cdk deploy --require-approval never
         env:
           BAKEHOUSE_STACK_NAME: ${{ env.BAKEHOUSE_STACK_NAME }}
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ env.AWS_REGION }}

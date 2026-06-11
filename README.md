@@ -83,6 +83,7 @@ GitHub Actions cannot use your local `student` SSO profile. The repo includes `.
 Set these in GitHub before using the deploy workflow:
 
 * Repository variable `BAKEHOUSE_STACK_NAME`: `joshua-hilarion-bakehouse`
+* Repository variable `AWS_ACCOUNT_ID`: `827602716979`
 * Repository variable `AWS_REGION`: `eu-west-2`
 * Repository secret `AWS_ROLE_ARN` for a GitHub OIDC deploy role
 
@@ -100,6 +101,8 @@ cd ..
 npx cdk synth
 npx cdk deploy --require-approval never
 ```
+
+The ARN returned by `aws sts get-caller-identity --profile student` is an assumed SSO session ARN, for example `arn:aws:sts::...:assumed-role/.../j.hilarion`. Do not paste that into CDK as a deploy role. GitHub needs either a real IAM role ARN in `AWS_ROLE_ARN`, or access key secrets.
 
 ## Monitoring
 
