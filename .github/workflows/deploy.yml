@@ -24,7 +24,7 @@ jobs:
       BAKEHOUSE_STACK_NAME: ${{ vars.BAKEHOUSE_STACK_NAME || 'joshua-hilarion-bakehouse' }}
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID || '827602716979' }}
       AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-2' }}
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN || 'arn:aws:iam::827602716979:role/github-actions-joshua-hilarion-bakehouse' }}
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
@@ -61,13 +61,13 @@ jobs:
             exit 0
           fi
 
-          echo "::error::Configure the AWS_ROLE_ARN repository secret with the GitHubActionsRoleArn CDK output."
+          echo "::error::AWS_ROLE_ARN resolved to empty. Add it as a repository secret or variable."
           exit 1
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
           role-session-name: gha-cdk-joshua-hilarion-${{ github.run_id }}-${{ github.run_attempt }}
           aws-region: ${{ env.AWS_REGION }}
 
