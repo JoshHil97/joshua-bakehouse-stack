@@ -85,18 +85,22 @@ Set these in GitHub before using the deploy workflow:
 * Repository variable `BAKEHOUSE_STACK_NAME`: `joshua-hilarion-bakehouse`
 * Repository variable `AWS_ACCOUNT_ID`: `827602716979`
 * Repository variable `AWS_REGION`: `eu-west-2`
-* Repository secret or variable `AWS_ROLE_ARN` for a GitHub OIDC deploy role
+* Repository secret `AWS_ROLE_ARN` for the GitHub OIDC deploy role
 
-The deploy workflow defaults to:
+The CDK stack creates a repo-specific OIDC role named:
 
 ```text
-arn:aws:iam::827602716979:role/github-actions-FSE-supporting-materials
+github-actions-joshua-hilarion-bakehouse
 ```
 
-If you cannot use OIDC, set these secrets instead:
+Deploy once from your machine with the `student` profile, then copy the `GitHubActionsRoleArn` stack output into the GitHub repository secret `AWS_ROLE_ARN`.
 
-* `AWS_ACCESS_KEY_ID`
-* `AWS_SECRET_ACCESS_KEY`
+```powershell
+$env:BAKEHOUSE_STACK_NAME='joshua-hilarion-bakehouse'
+$env:AWS_ACCOUNT_ID='827602716979'
+$env:AWS_REGION='eu-west-2'
+npx cdk deploy --profile student
+```
 
 The deploy workflow runs:
 

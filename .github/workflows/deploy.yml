@@ -15,34 +15,17 @@ permissions:
   id-token: write
 
 jobs:
-  setup:
-    name: Prepare deploy session
-    runs-on: ubuntu-latest
-    outputs:
-      session-name: ${{ steps.session.outputs.session-name }}
-
-    steps:
-      - name: Build AWS role session name
-        id: session
-        shell: bash
-        run: |
-          SESSION_NAME="gha-cdk-joshua-hilarion-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          echo "session-name=${SESSION_NAME}" >> "$GITHUB_OUTPUT"
-          echo "Using AWS role session name: ${SESSION_NAME}"
-
   deploy:
     name: Deploy CDK stack
     runs-on: ubuntu-latest
-    needs: setup
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
 
     env:
       BAKEHOUSE_STACK_NAME: ${{ vars.BAKEHOUSE_STACK_NAME || 'joshua-hilarion-bakehouse' }}
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID || '827602716979' }}
       AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-2' }}
-      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN || vars.AWS_ROLE_ARN || 'arn:aws:iam::827602716979:role/github-actions-FSE-supporting-materials' }}
-      AWS_ACCESS_KEY_ID_SECRET: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout
@@ -74,32 +57,18 @@ jobs:
         shell: bash
         run: |
           if [ -n "$AWS_ROLE_ARN" ]; then
-            echo "Using AWS OIDC role."
+            echo "Using AWS OIDC role: $AWS_ROLE_ARN"
             exit 0
           fi
 
-          if [ -n "$AWS_ACCESS_KEY_ID_SECRET" ] && [ -n "$AWS_SECRET_ACCESS_KEY_SECRET" ]; then
-            echo "Using AWS access key secrets."
-            exit 0
-          fi
-
-          echo "::error::Configure either AWS_ROLE_ARN, or AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, in repository secrets."
+          echo "::error::Configure the AWS_ROLE_ARN repository secret with the GitHubActionsRoleArn CDK output."
           exit 1
 
-      - name: Configure AWS credentials with OIDC
-        if: env.AWS_ROLE_ARN != ''
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          role-session-name: ${{ needs.setup.outputs.session-name }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Configure AWS credentials with access keys
-        if: env.AWS_ROLE_ARN == ''
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID_SECRET }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY_SECRET }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: gha-cdk-joshua-hilarion-${{ github.run_id }}-${{ github.run_attempt }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify AWS identity and session
@@ -113,8 +82,9 @@ jobs:
           ROLE_SESSION="$(echo "${IDENTITY}" | jq -r '.Arn' | grep -oE '[^/]+$')"
           echo "Current session: ${ROLE_SESSION}"
 
-          if [ -n "$AWS_ROLE_ARN" ] && [ "$ROLE_SESSION" != "${{ needs.setup.outputs.session-name }}" ]; then
-            echo "::error::Expected role session ${{ needs.setup.outputs.session-name }} but got $ROLE_SESSION"
+          EXPECTED_SESSION="gha-cdk-joshua-hilarion-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if [ "$ROLE_SESSION" != "$EXPECTED_SESSION" ]; then
+            echo "::error::Expected role session $EXPECTED_SESSION but got $ROLE_SESSION"
             exit 1
           fi
 

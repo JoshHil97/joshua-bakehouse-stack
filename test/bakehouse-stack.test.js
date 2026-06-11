@@ -77,4 +77,29 @@ describe('BakehouseStack', () => {
       Threshold: 1500
     })
   })
+
+  test('creates a GitHub Actions OIDC deploy role for this repo', () => {
+    const template = Template.fromStack(makeStack())
+
+    template.hasResourceProperties('AWS::IAM::Role', {
+      RoleName: 'github-actions-joshua-hilarion-bakehouse',
+      AssumeRolePolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Action: 'sts:AssumeRoleWithWebIdentity',
+            Condition: {
+              StringEquals: {
+                'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com'
+              },
+              StringLike: {
+                'token.actions.githubusercontent.com:sub': 'repo:JoshHil97/joshua-bakehouse-stack:ref:refs/heads/main'
+              }
+            }
+          })
+        ])
+      }
+    })
+
+    template.hasOutput('GitHubActionsRoleArn', {})
+  })
 })
