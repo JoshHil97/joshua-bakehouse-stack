@@ -85,7 +85,13 @@ Set these in GitHub before using the deploy workflow:
 * Repository variable `BAKEHOUSE_STACK_NAME`: `joshua-hilarion-bakehouse`
 * Repository variable `AWS_ACCOUNT_ID`: `827602716979`
 * Repository variable `AWS_REGION`: `eu-west-2`
-* Repository secret `AWS_ROLE_ARN` for a GitHub OIDC deploy role
+* Repository secret or variable `AWS_ROLE_ARN` for a GitHub OIDC deploy role
+
+The deploy workflow defaults to:
+
+```text
+arn:aws:iam::827602716979:role/github-actions-FSE-supporting-materials
+```
 
 If you cannot use OIDC, set these secrets instead:
 
