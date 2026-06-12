@@ -13,7 +13,8 @@
     "test:unit": "npm test -- --runInBand",
     "test:ci": "npm run test:unit && npm --prefix client run lint && npm --prefix client run build && npm --prefix client run test:e2e",
     "test:load": "k6 run tests/load/products.k6.js",
-    "test:load:cloudwatch": "k6 run tests/load/cloudwatch-demo.k6.js"
+    "test:load:cloudwatch": "k6 run tests/load/cloudwatch-demo.k6.js",
+    "test:load:release": "k6 run tests/load/release-flow.k6.js"
   },
   "devDependencies": {
     "aws-cdk": "^2.1033.0",
